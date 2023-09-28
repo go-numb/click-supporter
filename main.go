@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-vgo/robotgo"
 	"github.com/rs/zerolog/log"
 )
 
@@ -18,7 +19,8 @@ func main() {
 	}
 
 	if len(os.Args) < 5 {
-		log.Fatal().Msg("引数が足りません。引数は4つ、[回数, タイマー(秒数), X座標, Y座標, op:開始時刻MM/DD hh:mm]です。")
+		x, y := robotgo.GetMousePos()
+		log.Fatal().Msgf("引数が足りません。引数は4つ、[回数, タイマー(秒数), X座標, Y座標, op:ダブルクリック0/1, op:開始時刻'MM/DD hh:mm']です。現在のマウス座標は[X: %d, Y: %d]", x, y)
 	}
 
 	// マウスコントロールに必要な情報を渡す
@@ -30,13 +32,22 @@ func main() {
 	c.Y, _ = strconv.Atoi(os.Args[4])
 
 	if len(os.Args) > 5 { // [オプション]開始時間の引数
-		// time.Parse()ではUTC指定となるため、+9hの誤差をLocationで修正する
-		layout := "01/02 15:04"
-		year := time.Now().Year()
-		c.StartAt, _ = time.Parse(layout, os.Args[5])
-		c.StartAt = c.StartAt.AddDate(year, 0, 0)
-		jst, _ := time.LoadLocation("Asia/Tokyo")
-		c.StartAt, _ = time.ParseInLocation("2006-01-02 15:04:05 +0000 UTC", c.StartAt.String(), jst)
+		// ダブルクリック
+		isDoubleClick, _ := strconv.Atoi(os.Args[5])
+		if isDoubleClick == 1 {
+			c.IsDoubleClick = true
+			fmt.Println("double click!!")
+		}
+
+		if len(os.Args) > 6 { // [オプション]開始時間の引数
+			// time.Parse()ではUTC指定となるため、+9hの誤差をLocationで修正する
+			layout := "01/02 15:04"
+			year := time.Now().Year()
+			c.StartAt, _ = time.Parse(layout, os.Args[6])
+			c.StartAt = c.StartAt.AddDate(year, 0, 0)
+			jst, _ := time.LoadLocation("Asia/Tokyo")
+			c.StartAt, _ = time.ParseInLocation("2006-01-02 15:04:05 +0000 UTC", c.StartAt.String(), jst)
+		}
 	}
 
 	log.Info().Msgf(

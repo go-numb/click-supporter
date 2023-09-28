@@ -9,20 +9,22 @@ import (
 )
 
 type Controller struct {
-	Count       int
-	TimerSecond int
-	X           int
-	Y           int
-	StartAt     time.Time
+	Count         int
+	TimerSecond   int
+	X             int
+	Y             int
+	IsDoubleClick bool
+	StartAt       time.Time
 }
 
 func New() *Controller {
 	return &Controller{
-		Count:       1,
-		TimerSecond: 60,
-		X:           int(1920 / 2),
-		Y:           int(1080 / 2),
-		StartAt:     time.Now(),
+		Count:         1,
+		TimerSecond:   60,
+		X:             int(1920 / 2),
+		Y:             int(1080 / 2),
+		IsDoubleClick: false,
+		StartAt:       time.Now(),
 	}
 }
 
@@ -58,12 +60,23 @@ func (p *Controller) Execute() error {
 	defer ticker.Stop()
 
 	log.Info().Msgf("ticker start every %ds", p.TimerSecond)
+	// 実行回数
+	counter := 0
 	for {
 		<-ticker.C
 
 		// 実行
 		robotgo.Move(p.X, p.Y)
 		robotgo.Click()
+
+		if p.IsDoubleClick {
+			// Optional: ウインドウのアクティブ化を含む場合やダブルクリックの場合
+			time.Sleep(500 * time.Millisecond)
+			robotgo.Click()
+		}
+
+		counter++
+		log.Info().Msgf("%d:%d Clicked: %d\n", time.Now().Minute(), time.Now().Second(), counter)
 
 		count -= 1
 		if count < 1 {
